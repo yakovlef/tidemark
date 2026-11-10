@@ -32,7 +32,7 @@ Later: Cursor, ChatGPT export, GitHub, Gemini CLI, Aider.
 type Source interface {
     Name() string
     Files(ctx context.Context) ([]File, error)
-    Parse(ctx context.Context, f File, from int64) (iter.Seq2[Record, error], error)
+    Parse(ctx context.Context, f File, from int64) iter.Seq2[Record, error]
 }
 ```
 
