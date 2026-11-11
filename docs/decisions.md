@@ -73,3 +73,15 @@
 - v0.1.0 ~2026-11-14, v0.2.0 ~2026-11-23, v0.3.0 + launch ~2026-12-09..11. Launching before the holidays matters because HN and Reddit traffic drops in late December. If we miss it, the fallback is 2027-01-12..15.
 - Pace is 1–3 PRs a day. No merging everything in one burst.
 - Before the launch, use tidemark daily on own sessions for at least a week. This is where ranking and MCP descriptions get tuned.
+
+## 2026-11-10 Notes
+- v0.2 adds explicit notes: MCP tool `note` and CLI `note`/`notes`. The user asks the agent to save a decision, and it lands in the same index as history.
+- A note is a segment with source `note`, the project (cwd) and an optional named vault. Search ranks notes above history segments. Sync and `--reindex` never touch notes.
+- Notes are optional. The default flow (indexing existing history with no agent cooperation) stays the main differentiator. Compared to engram (explicit memories only), tidemark covers both.
+- Not in v0.1, so the 2026-11-14 release does not slip.
+
+## 2026-11-10 Lessons from kaeru
+- Agents rarely call memory tools on their own: kaeru reports 0 reads in 7 sessions with only a hint. v0.2 adds `tidemark context`, which a SessionStart hook injects automatically (installed by `init --install claude`). The MCP tools stay as they are.
+- Notes get `replaces`, so an outdated decision is superseded instead of sitting next to the new one with equal weight.
+- Until Russian stemming lands, Cyrillic queries use prefix match on every term, not just the last one (PR #8).
+- The README gives a two-line CLAUDE.md / AGENTS.md snippet telling the agent when to search past sessions.
