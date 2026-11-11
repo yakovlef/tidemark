@@ -21,7 +21,7 @@ A single Go binary that indexes the history agents already wrote, without agent 
 | Version | Scope |
 |---|---|
 | v0.1.0 (~2026-11-14) | Claude Code source, segmentation, atoms, redaction, store, search, CLI (`init`, `sync`, `search`, `mcp`, `doctor`), MCP `search` + `get` with lazy sync |
-| v0.2.0 (~2026-11-23) | Codex source, daemon (60 s polling) + `daemon install`, Russian stemming (if eval agrees), MCP `recent` (if needed), `init --install claude` |
+| v0.2.0 (~2026-11-23) | Codex source, daemon (60 s polling) + `daemon install`, Russian stemming (if eval agrees), MCP `recent` (if needed), `init --install claude`, notes (MCP `note` + CLI `note`/`notes`), SessionStart context hook (`tidemark context`) |
 | v0.3.0 (~2026-12-09..11) | session cards (none / Ollama / Anthropic Batch / OpenAI-compatible), eval with public corpus and baselines; public launch |
 
 Later: Cursor, ChatGPT export, GitHub, Gemini CLI, Aider.
@@ -118,9 +118,11 @@ Golden tests run 20 queries on a synthetic corpus in CI. Target: p95 under 100 m
 |---|---|---|
 | `search` | query, limit?, source?, project?, since? | ≤8 hits: id, title, project, date, ~300-char snippet (~3 KB total) |
 | `get` | id, neighbours? (default 1), cursor? | segment text + adjacent segments, ≤16 KB, cursor for the rest |
+| `note` (v0.2) | text, vault?, tags?, replaces? | saved note id |
 
 - The output is compact markdown text plus `structuredContent`.
-- All tools are read-only.
+- `search` and `get` are read-only. `note` (v0.2) is the only write tool.
+- **Notes (v0.2):** the user asks the agent to remember a decision ("for video thumbnails we use font X"). A note is stored as its own segment with source `note`, the current project and an optional named vault (`youtube`, `shop`). Notes get a ranking boost over history segments and are never touched by sync or reindex. `replaces` marks an older note as superseded: it stays searchable, ranks below current notes and is shown with a link to its replacement. History indexing still needs no agent cooperation; notes are an optional explicit layer on top.
 - **Lazy sync:** if the last sync is older than 5 minutes, the server takes a file lock, runs an incremental sync, then answers. From v0.2 the daemon does this and MCP is read-only.
 - Tool descriptions say when to call them: the user refers to past work, an error seen before, or a known repo. Test them by hand on Claude Code and Codex before each release.
 - stdout carries only JSON-RPC. All logs go through `slog` to stderr. A CI test checks that stdout is clean after a handshake.
@@ -134,6 +136,8 @@ Commands use stdlib `flag` with a subcommand switch.
 - `tidemark search <q> [--json]`
 - `tidemark mcp`
 - `tidemark doctor` checks paths, DB, FTS5, last error per source and a redaction self-test.
+- v0.2: `tidemark note <text> [--vault X]`, `tidemark notes [--vault X] [--project P]` (list, `--delete id`).
+- v0.2: `tidemark context [--project P]` prints a short summary for a session start hook: the last 5 session titles in the project plus its current notes (≤2 KB). `init --install claude` registers it as a Claude Code SessionStart hook.
 - v0.2: `tidemark daemon` polls mtime every 60 s (no fsnotify), plus `daemon install` (launchd/systemd).
 - v0.3: `tidemark cards run [--budget-usd X] [--dry-run] [--refresh]`
 
