@@ -85,3 +85,8 @@
 - Notes get `replaces`, so an outdated decision is superseded instead of sitting next to the new one with equal weight.
 - Until Russian stemming lands, Cyrillic queries use prefix match on every term, not just the last one (PR #8).
 - The README gives a two-line CLAUDE.md / AGENTS.md snippet telling the agent when to search past sessions.
+
+## 2026-11-11 Redaction
+- gitleaks stays as a library: +10.8 MB binary, 13 ms to load rules, ~3 MB/s on real history (8 MB in 2.7 s on first sync). Good enough for v0.1.
+- gitleaks `generic-api-key` is skipped. It is entropy based and hid ports, contract addresses and hashes.
+- Only the matched span is replaced. Replacing the secret string everywhere wiped words like `airflow` when they were also a DSN password.
