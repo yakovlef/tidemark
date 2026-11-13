@@ -3,6 +3,7 @@ module github.com/yakovlef/tidemark
 go 1.26.0
 
 require (
+	github.com/pelletier/go-toml/v2 v2.2.3
 	github.com/zricethezav/gitleaks/v8 v8.30.1
 	modernc.org/sqlite v1.62.0
 )
@@ -49,7 +50,6 @@ require (
 	github.com/muesli/termenv v0.15.1 // indirect
 	github.com/ncruces/go-strftime v1.1.0 // indirect
 	github.com/nwaples/rardecode/v2 v2.1.0 // indirect
-	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
