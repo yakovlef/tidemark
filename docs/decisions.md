@@ -90,3 +90,12 @@
 - gitleaks stays as a library: +10.8 MB binary, 13 ms to load rules, ~3 MB/s on real history (8 MB in 2.7 s on first sync). Good enough for v0.1.
 - gitleaks `generic-api-key` is skipped. It is entropy based and hid ports, contract addresses and hashes.
 - Only the matched span is replaced. Replacing the secret string everywhere wiped words like `airflow` when they were also a DSN password.
+
+## 2026-11-13 Sync
+- An appended file is re-read from the start of its last stored turn, and that turn is rebuilt. A turn that was still being written when the previous sync ran ends up whole.
+- A file is read from the start again if it shrinks or its first line changes.
+- Titles and prompts are masked before segmentation. The first prompt becomes the title as one flattened line, which hides line-anchored secrets like `.env` assignments.
+- gitleaks only knows `sk-ant-api03` and `sk-ant-admin01` keys and missed an `sk-ant-usr-` key in real history. The `anthropic` rule covers any `sk-ant-<type>-` key. Rules version 2.
+- The rules version and a hash of user patterns sit in `meta`. When either changes, sync reindexes the source by itself.
+- Files deleted from disk keep their segments. Claude Code removes old sessions after 30 days by default, and keeping them is part of the point.
+- First sync of 73 files: 10 s, 2,507 segments, 34 MB database. A sync with nothing new: 0.03 s.

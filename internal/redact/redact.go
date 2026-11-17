@@ -9,7 +9,7 @@ import (
 	"github.com/zricethezav/gitleaks/v8/detect"
 )
 
-const Version = "1"
+const Version = "2"
 
 type rule struct {
 	name string
@@ -19,6 +19,7 @@ type rule struct {
 var builtin = []rule{
 	{"bearer", regexp.MustCompile(`(?i)\bauthorization:\s*bearer\s+([^\s"'\x60$<]+)`)},
 	{"env", regexp.MustCompile(`(?m)^\s*(?:export\s+)?[A-Z0-9_]*(?:SECRET|TOKEN|PASSWORD|PASSWD|API_KEY|APIKEY)[A-Z0-9_]*\s*[=:]\s*["']?([^\s"'#$<]+)`)},
+	{"anthropic", regexp.MustCompile(`\b(sk-ant-[a-z]+\d*-[A-Za-z0-9_-]{20,})`)},
 	{"dsn", regexp.MustCompile(`\b[a-zA-Z][a-zA-Z0-9+.-]*://[^\s:/@]+:([^\s@/$<]+)@`)},
 }
 
