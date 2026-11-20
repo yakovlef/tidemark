@@ -40,3 +40,26 @@ func Load(path string) (Config, error) {
 	}
 	return c, nil
 }
+
+const template = `[redact]
+# Extra regexes to mask before indexing, on top of the built-in rules.
+# patterns = ['acme-\w+']
+`
+
+func Init(path string) (bool, error) {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return false, err
+	}
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if errors.Is(err, os.ErrExist) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if _, err := f.WriteString(template); err != nil {
+		_ = f.Close()
+		return false, err
+	}
+	return true, f.Close()
+}

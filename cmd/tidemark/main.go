@@ -23,6 +23,7 @@ Usage:
   tidemark <command> [flags]
 
 Commands:
+  init      create the config, find sources and run the first sync
   sync      index new and changed sessions [--source NAME] [--reindex]
   version   print version
 `
@@ -40,6 +41,8 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	switch args[0] {
+	case "init":
+		return runInit(ctx, args[1:], stdout, stderr)
 	case "sync":
 		return runSync(ctx, args[1:], stderr)
 	case "version":
@@ -78,6 +81,10 @@ func runSync(ctx context.Context, args []string, stderr io.Writer) int {
 		return 2
 	}
 
+	return syncAll(ctx, srcs, *reindex, stderr)
+}
+
+func syncAll(ctx context.Context, srcs []source.Source, reindex bool, stderr io.Writer) int {
 	cfgPath, err := config.DefaultPath()
 	if err != nil {
 		return fail(stderr, err)
@@ -100,7 +107,7 @@ func runSync(ctx context.Context, args []string, stderr io.Writer) int {
 		name := src.Name()
 		stats, err := index.Sync(ctx, st, src, index.Options{
 			Patterns: cfg.Redact.Patterns,
-			Reindex:  *reindex,
+			Reindex:  reindex,
 			Progress: func(done, total int) { fmt.Fprintf(stderr, "\r%s: %d/%d files", name, done, total) },
 		})
 		if stats.Files > 0 {
@@ -115,6 +122,59 @@ func runSync(ctx context.Context, args []string, stderr io.Writer) int {
 		}
 		fmt.Fprintf(stderr, "%s: %d files, %d changed, %d segments%s\n", name, stats.Files, stats.Changed, stats.Segments, note)
 	}
+	return 0
+}
+
+const connect = `
+Connect an agent:
+
+  Claude Code:  claude mcp add tidemark -- tidemark mcp
+
+  Codex (~/.codex/config.toml):
+    [mcp_servers.tidemark]
+    command = "tidemark"
+    args = ["mcp"]
+`
+
+func runInit(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("init", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+
+	cfgPath, err := config.DefaultPath()
+	if err != nil {
+		return fail(stderr, err)
+	}
+	created, err := config.Init(cfgPath)
+	if err != nil {
+		return fail(stderr, err)
+	}
+	if created {
+		fmt.Fprintf(stdout, "created %s\n", cfgPath)
+	} else {
+		fmt.Fprintf(stdout, "config %s already exists, left as is\n", cfgPath)
+	}
+
+	var found []source.Source
+	for _, src := range sources() {
+		files, err := src.Files(ctx)
+		if err != nil {
+			return fail(stderr, fmt.Errorf("%s: %w", src.Name(), err))
+		}
+		fmt.Fprintf(stdout, "%s: %d files\n", src.Name(), len(files))
+		if len(files) > 0 {
+			found = append(found, src)
+		}
+	}
+	if len(found) == 0 {
+		fmt.Fprintln(stdout, "no agent history found, nothing to index yet")
+	} else if code := syncAll(ctx, found, false, stderr); code != 0 {
+		return code
+	}
+
+	fmt.Fprint(stdout, connect)
 	return 0
 }
 
